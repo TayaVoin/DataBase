@@ -35,3 +35,23 @@ JOIN devices d ON a.device_id = d.device_id
 JOIN alert_statuses ast ON a.status_id = ast.status_id
 ORDER BY a.alert_id DESC
 LIMIT 1;
+
+-- 4. Демонстрация работы второго триггера: trg_alerts_update_timestamp
+--    Триггер должен автоматически обновлять resolved_at при закрытии аварии
+
+-- Посмотрим текущее состояние аварии с id = 1 (до изменений)
+SELECT alert_id, status_id, resolved_at FROM alerts WHERE alert_id = 1;
+
+-- Закрываем аварию (меняем статус на RESOLVED)
+UPDATE alerts SET status_id = (SELECT status_id FROM alert_statuses WHERE status_name = 'RESOLVED')
+WHERE alert_id = 1;
+
+-- Проверяем, что resolved_at автоматически установился
+SELECT alert_id, status_id, resolved_at FROM alerts WHERE alert_id = 1;
+
+-- Возвращаем аварию в работу (меняем статус обратно на IN_PROGRESS)
+UPDATE alerts SET status_id = (SELECT status_id FROM alert_statuses WHERE status_name = 'IN_PROGRESS')
+WHERE alert_id = 1;
+
+-- Проверяем, что resolved_at сбросился в NULL
+SELECT alert_id, status_id, resolved_at FROM alerts WHERE alert_id = 1;
